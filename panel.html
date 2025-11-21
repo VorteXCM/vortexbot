@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket Dashboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-main: radial-gradient(circle at top, #1d2537, #020617 60%);
+      --bg-surface: rgba(15, 23, 42, 0.96);
+      --bg-surface-soft: rgba(15, 23, 42, 0.9);
+      --bg-sidebar: rgba(15, 23, 42, 0.98);
+      --border-subtle: #111827;
+      --border-strong: #1e293b;
+      --accent: #4f46e5;
+      --accent-soft: #6366f1;
+      --text-main: #e5e7eb;
+      --text-dim: #9ca3af;
+      --text-muted: #6b7280;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.55);
+    }
+
+    .theme-light {
+      color-scheme: light;
+      --bg-main: radial-gradient(circle at top, #eef2ff, #e5e7eb 55%);
+      --bg-surface: rgba(255, 255, 255, 0.98);
+      --bg-surface-soft: rgba(248, 250, 252, 0.98);
+      --bg-sidebar: rgba(248, 250, 252, 0.98);
+      --border-subtle: #d1d5db;
+      --border-strong: #cbd5f5;
+      --accent: #4f46e5;
+      --accent-soft: #6366f1;
+      --text-main: #111827;
+      --text-dim: #4b5563;
+      --text-muted: #6b7280;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.18);
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      transition: background 0.3s ease, color 0.2s ease;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: var(--bg-sidebar);
+      border-inline-end: 1px solid var(--border-subtle);
+      padding: 16px 12px;
+      box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35);
+      position: sticky;
+      top: 0;
+      max-height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar h2 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin: 0 0 8px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .guild-list {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+    .guild-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      border: 1px solid transparent;
+    }
+    .guild-item:hover {
+      background: #020617;
+      border-color: var(--border-strong);
+    }
+    .guild-item.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      border-color: transparent;
+    }
+    .guild-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #9ca3af;
+      overflow: hidden;
+    }
+    .guild-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .main {
+      padding: 16px 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .header-title h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .header-title span {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-strong);
+      color: var(--text-dim);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--bg-surface);
+      border-radius: 12px;
+      padding: 14px 14px 16px;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 150px;
+      box-shadow: var(--shadow-soft);
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+    .card p {
+      margin: 0;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    label {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      display: block;
+      margin-bottom: 4px;
+    }
+    select, textarea, input {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: #020617;
+      color: var(--text-main);
+      padding: 7px 9px;
+      font-size: 0.85rem;
+    }
+    select:focus, textarea:focus, input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    button.primary {
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button.primary:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .status {
+      font-size: 0.78rem;
+    }
+    .status.ok { color: #4ade80; }
+    .status.err { color: #f97373; }
+    .status.info { color: var(--text-dim); }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+    .small {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* پریویو پنل تیکت */
+    .preview-card {
+      margin-top: 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface-soft);
+      padding: 10px 12px 12px;
+      font-size: 0.8rem;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+    }
+    .preview-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .preview-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #111827;
+    }
+    .preview-author {
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .preview-content {
+      margin-top: 4px;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      color: var(--text-main);
+      white-space: pre-wrap;
+    }
+    .preview-actions {
+      margin-top: 4px;
+    }
+    .preview-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 120px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #1f2937;
+      color: #e5e7eb;
+      font-size: 0.78rem;
+    }
+
+    /* استات بالا */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.8);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .stat-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #4ade80;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.7);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+    .theme-toggle-icon {
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        max-height: none;
+        box-shadow: none;
+        border-inline-end: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .main {
+        padding: 14px 14px 24px;
+      }
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .header {
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .footer .status {
+        order: 2;
+      }
+      .footer button {
+        order: 1;
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>سرورهای بات</h2>
+      <div id="guildList" class="guild-list small">
+        <div>در حال دریافت لیست سرورها...</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="header">
+        <div class="header-title">
+          <h1 id="mainTitle">مدیریت سیستم تیکت</h1>
+          <span id="selectedGuildName">ابتدا یک سرور از لیست سمت چپ انتخاب کن.</span>
+          <div class="stats-row">
+            <div class="stat-chip"><span class="stat-dot"></span><span id="statGuildCount">0</span>&nbsp;سرور متصل</div>
+            <div class="stat-chip">وضعیت بات: <span id="statBotStatus">نامشخص</span></div>
+          </div>
+        </div>
+        <div class="badge" style="gap:8px;">
+          <div class="theme-toggle" id="themeToggle">
+            <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+            <span id="themeLabel">حالت تیره</span>
+          </div>
+          <button id="tabTickets" class="primary" style="padding:4px 10px;font-size:0.78rem;">تیکت‌ها</button>
+          <button id="tabVoice" class="primary" style="padding:4px 10px;font-size:0.78rem;background:linear-gradient(135deg,#0f172a,#1f2937);">وویس</button>
+        </div>
+      </div>
+
+      <div id="ticketView">
+        <div class="grid">
+        <section class="card">
+          <div>
+            <h3>مقصد پنل تیکت</h3>
+            <p>چنلی را انتخاب کن که پیام پنل تیکت داخل آن ارسال شود.</p>
+          </div>
+
+          <div>
+            <label for="panelChannelSelect">چنل پنل (متنی)</label>
+            <select id="panelChannelSelect" disabled>
+              <option>اول یک سرور انتخاب کن...</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="ticketCategorySelect">کتگوری تیکت‌ها</label>
+            <select id="ticketCategorySelect" disabled>
+              <option>اول یک سرور انتخاب کن...</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="card">
+          <div>
+            <h3>دسترسی و رول ساپورت</h3>
+            <p>رولی را انتخاب کن که اعضای تیم پشتیبانی روی تیکت‌ها دسترسی داشته باشند.</p>
+          </div>
+
+          <div>
+            <label for="supportRoleSelect">رول ساپورت</label>
+            <select id="supportRoleSelect" disabled>
+              <option>اول یک سرور انتخاب کن...</option>
+            </select>
+          </div>
+
+          <div class="small">
+            نکته: همه تیکت‌ها فقط برای صاحب تیکت، رول ساپورت و ادمین‌های آن کتگوری قابل مشاهده‌اند.
+          </div>
+        </section>
+
+        <section class="card">
+          <div>
+            <h3>متن‌ها و دکمه‌ها</h3>
+            <p>متن بالای پنل و لیبل دکمه را شخصی‌سازی کن.</p>
+          </div>
+
+          <div>
+            <label for="panelMessage">متن پیام پنل</label>
+            <textarea id="panelMessage" placeholder="برای ساخت تیکت روی دکمه زیر کلیک کن."></textarea>
+          </div>
+
+          <div>
+            <label for="buttonLabel">متن دکمه ساخت تیکت</label>
+            <input id="buttonLabel" placeholder="مثال: ساخت تیکت" />
+          </div>
+
+          <div class="preview-card">
+            <div class="preview-header">
+              <div class="preview-avatar"></div>
+              <div>
+                <div class="preview-author">Ticket Bot</div>
+                <div class="small">اکنون • در چنل پنل انتخاب‌شده</div>
+              </div>
+            </div>
+            <div id="previewContent" class="preview-content">برای ساخت تیکت روی دکمه زیر کلیک کن.</div>
+            <div class="preview-actions">
+              <button type="button" class="preview-button" id="previewButton">ساخت تیکت</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="footer">
+        <div id="status" class="status info">ابتدا یک سرور انتخاب کن.</div>
+        <button id="sendBtn" class="primary" disabled>ارسال پنل تیکت در دیسکورد</button>
+      </div>
+
+      <div class="small">
+        راهنما: بعد از اینکه پنل را ارسال کردی، کاربران با کلیک روی دکمه، یک چنل تیکت خصوصی زیر کتگوری انتخاب‌شده می‌سازند و آن‌جا دکمه «بستن تیکت» در دسترس است.
+      </div>
+      </div>
+
+      <div id="voiceView" style="display:none;">
+        <section class="card">
+          <div>
+            <h3>کنترل وویس بات</h3>
+            <p>چنل وویسی را انتخاب کن که می‌خواهی بات وارد آن شود.</p>
+          </div>
+
+          <div>
+            <label for="voiceChannelSelect">چنل وویس</label>
+            <select id="voiceChannelSelect" disabled>
+              <option>اول یک سرور انتخاب کن...</option>
+            </select>
+          </div>
+
+          <div class="footer" style="margin-top:12px;padding:0;">
+            <div id="voiceStatus" class="status info">ابتدا سرور و سپس یک چنل وویس را انتخاب کن.</div>
+            <button id="moveVoiceBtn" class="primary" disabled>انتقال بات به این وویس</button>
+          </div>
+
+          <div class="small">
+            نکته: برای اینکه بات بتواند وارد وویس شود باید پرمیشن Connect و Speak را در آن چنل داشته باشد.
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const guildListEl = $("guildList");
+    const statusEl = $("status");
+    const selectedGuildNameEl = $("selectedGuildName");
+
+    const panelChannelSelect = $("panelChannelSelect");
+    const ticketCategorySelect = $("ticketCategorySelect");
+    const supportRoleSelect = $("supportRoleSelect");
+    const panelMessageInput = $("panelMessage");
+    const buttonLabelInput = $("buttonLabel");
+    const sendBtn = $("sendBtn");
+
+    const previewContent = $("previewContent");
+    const previewButton = $("previewButton");
+    const themeToggle = $("themeToggle");
+    const themeIcon = $("themeIcon");
+    const themeLabel = $("themeLabel");
+    const statGuildCount = $("statGuildCount");
+    const statBotStatus = $("statBotStatus");
+
+    const ticketView = $("ticketView");
+    const voiceView = $("voiceView");
+    const tabTickets = $("tabTickets");
+    const tabVoice = $("tabVoice");
+    const mainTitle = $("mainTitle");
+
+    const voiceChannelSelect = $("voiceChannelSelect");
+    const voiceStatusEl = $("voiceStatus");
+    const moveVoiceBtn = $("moveVoiceBtn");
+
+    let currentGuildId = null;
+    let currentStructure = null;
+
+    function setStatus(text, type = 'info') {
+      statusEl.textContent = text;
+      statusEl.className = `status ${type}`;
+    }
+
+    async function loadGuilds() {
+      try {
+        const res = await fetch('/api/guilds');
+        const data = await res.json();
+
+        guildListEl.innerHTML = '';
+
+        if (!data.guilds || data.guilds.length === 0) {
+          guildListEl.innerHTML = '<div>بات در هیچ سروری حضور ندارد.</div>';
+          return;
+        }
+
+        statGuildCount.textContent = data.guilds.length;
+        statBotStatus.textContent = 'آنلاین';
+
+        data.guilds.forEach((g) => {
+          const item = document.createElement('div');
+          item.className = 'guild-item';
+          item.dataset.id = g.id;
+
+          const icon = document.createElement('div');
+          icon.className = 'guild-icon';
+          if (g.icon) {
+            const img = document.createElement('img');
+            img.src = g.icon;
+            icon.appendChild(img);
+          } else {
+            icon.textContent = (g.name || '?')[0];
+          }
+
+          const name = document.createElement('div');
+          name.textContent = g.name;
+
+          item.appendChild(icon);
+          item.appendChild(name);
+
+          item.addEventListener('click', () => selectGuild(g.id, g.name, item));
+
+          guildListEl.appendChild(item);
+        });
+      } catch (e) {
+        guildListEl.innerHTML = '<div>خطا در دریافت لیست سرورها.</div>';
+        statBotStatus.textContent = 'خطا';
+      }
+    }
+
+    async function selectGuild(id, name, element) {
+      currentGuildId = id;
+      currentStructure = null;
+
+      document.querySelectorAll('.guild-item').forEach((el) => el.classList.remove('active'));
+      element.classList.add('active');
+
+      selectedGuildNameEl.textContent = `سرور انتخاب شده: ${name}`;
+      setStatus('در حال دریافت چنل‌ها و رول‌ها...', 'info');
+
+      panelChannelSelect.disabled = true;
+      ticketCategorySelect.disabled = true;
+      supportRoleSelect.disabled = true;
+      sendBtn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guilds/${id}/structure`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          setStatus(data.error || 'خطا در دریافت ساختار سرور.', 'err');
+          return;
+        }
+
+        currentStructure = data;
+        fillSelects();
+        setStatus('سرور لود شد، مقادیر را انتخاب کن و سپس پنل را ارسال کن.', 'ok');
+      } catch (e) {
+        setStatus('خطا در اتصال به سرور.', 'err');
+      }
+    }
+
+    function fillSelects() {
+      if (!currentStructure) return;
+
+      const { channels, roles } = currentStructure;
+
+      const textChannels = channels.filter((ch) => ch.type === 0);
+      const categories = channels.filter((ch) => ch.type === 4);
+      const voiceChannels = channels.filter((ch) => ch.type === 2);
+
+      panelChannelSelect.innerHTML = '';
+      ticketCategorySelect.innerHTML = '';
+      supportRoleSelect.innerHTML = '';
+      voiceChannelSelect.innerHTML = '';
+
+      if (textChannels.length === 0) {
+        const opt = document.createElement('option');
+        opt.textContent = 'چنل متنی یافت نشد.';
+        panelChannelSelect.appendChild(opt);
+        panelChannelSelect.disabled = true;
+      } else {
+        textChannels.forEach((ch) => {
+          const opt = document.createElement('option');
+          opt.value = ch.id;
+          opt.textContent = `#${ch.name}`;
+          panelChannelSelect.appendChild(opt);
+        });
+        panelChannelSelect.disabled = false;
+      }
+
+      if (categories.length === 0) {
+        const opt = document.createElement('option');
+        opt.textContent = 'کتگوری یافت نشد.';
+        ticketCategorySelect.appendChild(opt);
+        ticketCategorySelect.disabled = true;
+      } else {
+        categories.forEach((ch) => {
+          const opt = document.createElement('option');
+          opt.value = ch.id;
+          opt.textContent = ch.name;
+          ticketCategorySelect.appendChild(opt);
+        });
+        ticketCategorySelect.disabled = false;
+      }
+
+      if (!roles || roles.length === 0) {
+        const opt = document.createElement('option');
+        opt.textContent = 'رول ساپورت یافت نشد.';
+        supportRoleSelect.appendChild(opt);
+        supportRoleSelect.disabled = true;
+      } else {
+        roles.forEach((r) => {
+          const opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = r.name;
+          supportRoleSelect.appendChild(opt);
+        });
+        supportRoleSelect.disabled = false;
+      }
+
+      if (voiceChannels.length === 0) {
+        const opt = document.createElement('option');
+        opt.textContent = 'چنل وویس یافت نشد.';
+        voiceChannelSelect.appendChild(opt);
+        voiceChannelSelect.disabled = true;
+        moveVoiceBtn.disabled = true;
+      } else {
+        voiceChannels.forEach((ch) => {
+          const opt = document.createElement('option');
+          opt.value = ch.id;
+          opt.textContent = `🔊 ${ch.name}`;
+          voiceChannelSelect.appendChild(opt);
+        });
+        voiceChannelSelect.disabled = false;
+        moveVoiceBtn.disabled = !voiceChannelSelect.value;
+      }
+
+      sendBtn.disabled = !(
+        panelChannelSelect.value &&
+        ticketCategorySelect.value &&
+        supportRoleSelect.value
+      );
+    }
+
+    panelChannelSelect.addEventListener('change', () => {
+      if (currentStructure) {
+        sendBtn.disabled = !(
+          panelChannelSelect.value &&
+          ticketCategorySelect.value &&
+          supportRoleSelect.value
+        );
+      }
+    });
+    ticketCategorySelect.addEventListener('change', () => {
+      if (currentStructure) {
+        sendBtn.disabled = !(
+          panelChannelSelect.value &&
+          ticketCategorySelect.value &&
+          supportRoleSelect.value
+        );
+      }
+    });
+    supportRoleSelect.addEventListener('change', () => {
+      if (currentStructure) {
+        sendBtn.disabled = !(
+          panelChannelSelect.value &&
+          ticketCategorySelect.value &&
+          supportRoleSelect.value
+        );
+      }
+    });
+
+    sendBtn.addEventListener('click', async () => {
+      if (!currentGuildId) return;
+
+      setStatus('در حال ارسال پنل...', 'info');
+      sendBtn.disabled = true;
+
+      const payload = {
+        guildId: currentGuildId,
+        panelChannelId: panelChannelSelect.value,
+        ticketCategoryId: ticketCategorySelect.value,
+        supportRoleId: supportRoleSelect.value,
+        panelMessage: panelMessageInput.value.trim() || 'برای ساخت تیکت روی دکمه زیر کلیک کن.',
+        buttonLabel: buttonLabelInput.value.trim() || 'ساخت تیکت',
+      };
+
+      try {
+        const res = await fetch('/create-panel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          setStatus(data.message || 'پنل با موفقیت ارسال شد.', 'ok');
+        } else {
+          setStatus(data.error || 'خطایی رخ داد.', 'err');
+        }
+      } catch (e) {
+        setStatus('اتصال به سرور برقرار نشد.', 'err');
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+
+    moveVoiceBtn.addEventListener('click', async () => {
+      if (!currentGuildId || !voiceChannelSelect.value) return;
+
+      voiceStatusEl.textContent = 'در حال اتصال بات به وویس...';
+      voiceStatusEl.className = 'status info';
+      moveVoiceBtn.disabled = true;
+
+      try {
+        const res = await fetch('/voice/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            guildId: currentGuildId,
+            voiceChannelId: voiceChannelSelect.value,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          voiceStatusEl.textContent = data.message || 'بات با موفقیت به وویس متصل شد.';
+          voiceStatusEl.className = 'status ok';
+        } else {
+          voiceStatusEl.textContent = data.error || 'خطا در اتصال به وویس.';
+          voiceStatusEl.className = 'status err';
+        }
+      } catch (e) {
+        voiceStatusEl.textContent = 'خطا در اتصال به سرور پنل.';
+        voiceStatusEl.className = 'status err';
+      } finally {
+        moveVoiceBtn.disabled = !voiceChannelSelect.value;
+      }
+    });
+
+    // پریویو زنده متن پنل و دکمه
+    function updatePreview() {
+      previewContent.textContent = panelMessageInput.value.trim() || 'برای ساخت تیکت روی دکمه زیر کلیک کن.';
+      previewButton.textContent = buttonLabelInput.value.trim() || 'ساخت تیکت';
+    }
+    panelMessageInput.addEventListener('input', updatePreview);
+    buttonLabelInput.addEventListener('input', updatePreview);
+
+    // تم تیره/روشن با localStorage
+    function applyTheme(theme) {
+      if (theme === 'light') {
+        document.documentElement.classList.add('theme-light');
+        themeIcon.textContent = '☀️';
+        themeLabel.textContent = 'حالت روشن';
+      } else {
+        document.documentElement.classList.remove('theme-light');
+        themeIcon.textContent = '🌙';
+        themeLabel.textContent = 'حالت تیره';
+      }
+    }
+
+    const savedTheme = localStorage.getItem('ticketPanelTheme') || 'dark';
+    applyTheme(savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.classList.contains('theme-light') ? 'light' : 'dark';
+      const next = current === 'light' ? 'dark' : 'light';
+      localStorage.setItem('ticketPanelTheme', next);
+      applyTheme(next);
+    });
+
+    // سوییچ بین تب تیکت و وویس
+    function activateTab(tab) {
+      if (tab === 'tickets') {
+        ticketView.style.display = '';
+        voiceView.style.display = 'none';
+        mainTitle.textContent = 'مدیریت سیستم تیکت';
+        tabTickets.style.background = 'linear-gradient(135deg, var(--accent), var(--accent-soft))';
+        tabVoice.style.background = 'linear-gradient(135deg,#0f172a,#1f2937)';
+      } else {
+        ticketView.style.display = 'none';
+        voiceView.style.display = '';
+        mainTitle.textContent = 'کنترل وویس بات';
+        tabVoice.style.background = 'linear-gradient(135deg, var(--accent), var(--accent-soft))';
+        tabTickets.style.background = 'linear-gradient(135deg,#0f172a,#1f2937)';
+      }
+    }
+
+    tabTickets.addEventListener('click', () => activateTab('tickets'));
+    tabVoice.addEventListener('click', () => activateTab('voice'));
+
+    // شروع
+    loadGuilds();
+    updatePreview();
+    activateTab('tickets');
+  </script>
+</body>
+</html>
